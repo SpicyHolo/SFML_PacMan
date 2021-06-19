@@ -8,14 +8,14 @@ protected:
 	//Graphics
 	sf::Sprite sprite;
 	sf::Texture& texture;
-
-	//Animation
-	std::map<int, std::vector<sf::IntRect>> animations;
-
 	sf::Vector2u textureSize;
 	sf::Vector2u startingTexturePos;
-	unsigned framesTotal;
-	
+
+	//Animations
+	std::map<Directions::dir, std::vector<sf::IntRect>> frames;
+	sf::IntRect idleFrame;
+
+	int framesTotal;
 	float animationTimer;
 	float timer;
 
@@ -23,7 +23,7 @@ protected:
 	int lastFrame;
 
 	//Movement
-	int direction;
+	Directions::dir facingDirection;
 	float velocity;
 
 	//Tile position
@@ -32,7 +32,7 @@ protected:
 
 
 public:
-	enum direction { IDLE = 0, UP = 1, DOWN = -1, LEFT = 2, RIGHT = -2 };
+	
 
 	//Constructor
 	Entity(sf::Texture& texture, const sf::Vector2u& textureSize, const sf::Vector2u &startingTexturePos, const unsigned &framesTotal, float &dt, const sf::Vector2i& tile_position, const float &velocity);
@@ -47,11 +47,10 @@ public:
 	virtual void animate();
 
 	//Movement and location
-	void setDirection(const int& dir);
-	void move(const sf::Vector2f& offset);
-	void changeTile(const sf::Vector2i& tile);
+	void setFacingDirection(const Directions::dir &dir);
+	virtual void move(const sf::Vector2f& offset);
+	void setTile(const sf::Vector2i& tile);
 
-	//Direcitons
 
 	//Accessors
 	sf::Vector2i getTilePosition();

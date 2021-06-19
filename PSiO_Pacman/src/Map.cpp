@@ -75,17 +75,17 @@ void Map::initJunctions()
 	}
 }
 
-unsigned Map::getTile(const unsigned& x, const unsigned& y)
+int Map::getTile(const int& x, const int& y)
 {
 	return this->tiles[x][y];
 }
 
-bool Map::checkEntityBlock(const unsigned& x, const unsigned& y)
+bool Map::checkEntityBlock(const int& x, const int& y)
 {
 	return tiles[x][y] != 30 && tiles[x][y] != 26 && tiles[x][y] != 27;
 }
 
-bool Map::isJunction(const unsigned& x, const unsigned& y)
+bool Map::isJunction(const int& x, const int& y)
 {
 	for (auto& p : intersections)
 	{
@@ -93,6 +93,12 @@ bool Map::isJunction(const unsigned& x, const unsigned& y)
 			return true;
 	}
 	return false;
+}
+
+void Map::removeTictac(const sf::Vector2i& tile)
+{
+		if (tiles[tile.x][tile.y] == 26)
+			tiles[tile.x][tile.y] = 30;
 }
 
 void Map::update()

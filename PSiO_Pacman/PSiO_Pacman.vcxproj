@@ -143,6 +143,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Pacman.cpp" />
     <ClCompile Include="src\PacMan.cpp" />
     <ClCompile Include="src\Map.cpp" />
     <ClCompile Include="src\Entity.cpp" />
@@ -151,6 +152,8 @@
     <ClCompile Include="src\stdafx.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Pacman.h" />
+    <ClInclude Include="src\Directions.h" />
     <ClInclude Include="src\PacMan.h" />
     <ClInclude Include="src\Map.h" />
     <ClInclude Include="src\Entity.h" />

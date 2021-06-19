@@ -1,10 +1,16 @@
 #include "stdafx.h"
 #include "Entity.h"
 
+//Constructor
 Entity::Entity(sf::Texture& texture, const sf::Vector2u& texture_size, const sf::Vector2u& starting_texture_pos, const unsigned& frames_total , float &dt, const sf::Vector2i &tile_position, const float& velocity)
-	: texture(texture), textureSize(texture_size), startingTexturePos(starting_texture_pos), framesTotal(frames_total), dt(dt), velocity(velocity),
-	animationTimer(20.f), timer(0.f), lastFrame(framesTotal - 1), currentFrame(0), direction(UP)
+	: texture(texture), textureSize(texture_size), startingTexturePos(starting_texture_pos), framesTotal(frames_total), dt(dt), velocity(velocity)
 {
+
+	//init animation variables
+	this->animationTimer = 10.f;
+	this->timer = 0.f;
+	this->lastFrame = frames_total - 1;
+	this->currentFrame = 0;
 
 	//init Sprites
 	this->initAnimation();
@@ -25,65 +31,81 @@ Entity::~Entity()
 {
 }
 
+//Update
 void Entity::update()
 {
-	this->sprite.setPosition(this->screenPosition);
 	this->animate();
 }
 
+//Render
 void Entity::render(sf::RenderTarget &target)
 {
 	target.draw(this->sprite);
 }
 
+//Loads animation sf::IntRect into a map (for each facing direction)
 void Entity::initAnimation()
 {
+	this->idleFrame = sf::IntRect(this->startingTexturePos.x * this->textureSize.x, this->startingTexturePos.y * this->textureSize.y, this->textureSize.x, this->textureSize.y);
+
+	this->frames[Directions::dir::UP] = std::vector<sf::IntRect>();
+	this->frames[Directions::dir::DOWN] = std::vector<sf::IntRect>();
+	this->frames[Directions::dir::LEFT] = std::vector<sf::IntRect>();
+	this->frames[Directions::dir::RIGHT] = std::vector<sf::IntRect>();
+
+	std::vector<sf::IntRect>* order_array[4] = { &this->frames.at(Directions::dir::UP), &this->frames.at(Directions::dir::DOWN), &this->frames.at(Directions::dir::LEFT), &this->frames.at(Directions::dir::RIGHT) };
+	
 	for (size_t i = 0; i < 4; i++)
 	{
-		//enum UP = 1, DOWN = -1, LEFT = 2, RIGHT = -2
-		//map i = [1;4] o this enum
-
-		int dir_array[4] = { UP, DOWN, LEFT, RIGHT };
-		int dir = dir_array[i];
-
-		//Loads texture's intRects from texture grid
 		for (size_t j = 0; j < this->framesTotal; j++)
 		{
-			unsigned left = (this->startingTexturePos.x + j + (i * framesTotal)) * this->textureSize.x;
-			unsigned top = (this->startingTexturePos.y * this->textureSize.y);
-			unsigned width = textureSize.x;
-			unsigned height = textureSize.y;
-			this->animations[dir].push_back(sf::IntRect(left, top, width, height));
+			int left = (this->startingTexturePos.x + (i * this->framesTotal) + j) * this->textureSize.x;
+			int top = (this->startingTexturePos.y * this->textureSize.y); //Each animation is done in one row
+			int width = this->textureSize.x;
+			int height = this->textureSize.y;
+
+			order_array[i]->push_back(sf::IntRect(left, top, width, height));
 		}
 	}
 }
+
+//Animates the sprite based on facing direction
 void Entity::animate()
 {
-	this->timer += 100.f * this->dt;
-	if (this->timer >= this->animationTimer)
+	if (!this->facingDirection == Directions::dir::IDLE)
 	{
-		//Reset timer
-		this->timer = 0.f;
+		this->timer += 100.f * this->dt;
+		if (this->timer >= this->animationTimer)
+		{
+			//Reset timer
+			this->timer = 0.f;
 
-		//Animate
-		if (this->currentFrame != this->lastFrame)
-		{
-			this->currentFrame++;
+			//Animate
+			if (this->currentFrame != this->lastFrame)
+			{
+				this->currentFrame++;
+			}
+			else
+			{
+				this->currentFrame = 0;
+			}
+			sf::IntRect textureRect = this->frames.at(this->facingDirection)[currentFrame];
+			this->sprite.setTextureRect(textureRect);
 		}
-		else
-		{
-			this->currentFrame = 0;
-		}
-		sf::IntRect textureRect = this->animations.at(this->direction)[currentFrame];
-		this->sprite.setTextureRect(textureRect);
+	}
+	else
+	{
+		this->sprite.setTextureRect(this->idleFrame);
 	}
 }
 
-void Entity::setDirection(const int& dir)
+//sets facing directoin
+void Entity::setFacingDirection(const Directions::dir& dir)
 {
-	this->direction = dir;
+	this->facingDirection = dir;
 }
 
+//Moves the sprite
 void Entity::move(const sf::Vector2f& offset)
 {
 	this->screenPosition.x += offset.x;
@@ -97,18 +119,21 @@ void Entity::move(const sf::Vector2f& offset)
 		);
 	}
 
-
+	this->sprite.setPosition(this->screenPosition);
 }
 
-void Entity::changeTile(const sf::Vector2i& tile)
+//Teleports sprite to a tile
+void Entity::setTile(const sf::Vector2i& tile)
 {
 	this->tilePosition = tile;
 	this->screenPosition = sf::Vector2f(
 		this->tilePosition.x * 16.f + 8.f,
 		this->tilePosition.y * 16.f + 8.f
 	);
+	this->sprite.setPosition(this->screenPosition);
 }
 
+//Accessors
 sf::Vector2i Entity::getTilePosition()
 {
 	return this->tilePosition;

@@ -23,8 +23,8 @@ private:
 	Map* map;
 
 	//Entities
-	PacMan* pacMan;
-
+	Pacman* pacman;
+	
 public:
 	Game();
 	virtual ~Game();
@@ -33,19 +33,25 @@ public:
 
 	void loadTextures();
 
+	//Entities
+	bool canPacmanMove();
+	void teleportTunnels(Entity* entity);
+
 	//Manage key presses
-	void updateKeyControl(int keyCode);
+	void keyPressed(int keyCode);
 
 	//Sfml window stuff
 	void updateSfmlEvents();
 	bool isRunning();
 
 	//Update
+	void updatePacman();
 	void update();
 
 	//Render
 	void render();
 
+	//Run engine
 	void run();
 };
 

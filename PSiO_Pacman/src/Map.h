@@ -23,10 +23,11 @@ public:
 	void initMap();
 	void initJunctions();
 
-	unsigned getTile(const unsigned &x, const unsigned& y);
+	int getTile(const int &x, const int& y);
 
-	bool checkEntityBlock(const unsigned& x, const unsigned& y);
-	bool isJunction(const unsigned& x, const unsigned& y);
+	bool checkEntityBlock(const int& x, const int& y);
+	bool isJunction(const int& x, const int& y);
+	void removeTictac(const sf::Vector2i& tile);
 
 	void update();
 	void render(sf::RenderTarget& target);
