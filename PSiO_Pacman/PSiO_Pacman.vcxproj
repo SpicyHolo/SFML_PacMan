@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{88b8eaee-1bcc-45df-bf46-e48c78caac75}</ProjectGuid>
-    <RootNamespace>PSiOPacman</RootNamespace>
+    <ProjectGuid>{9bc962ee-3eb0-40ef-809a-4fbfcff90b37}</ProjectGuid>
+    <RootNamespace>PSiOPacMan</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -143,26 +143,24 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\Pacman.cpp" />
-    <ClCompile Include="src\PacMan.cpp" />
-    <ClCompile Include="src\Map.cpp" />
+    <ClInclude Include="src\Ghost.h" />
+    <ClInclude Include="src\Directions.h" />
+    <ClInclude Include="src\Entity.h" />
+    <ClInclude Include="src\Game.h" />
+    <ClInclude Include="src\Map.h" />
+    <ClInclude Include="src\Pacman.h" />
+    <ClInclude Include="src\stdafx.h" />
+    <ClInclude Include="src\UI.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Ghost.cpp" />
     <ClCompile Include="src\Entity.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Map.cpp" />
+    <ClCompile Include="src\Pacman.cpp" />
     <ClCompile Include="src\stdafx.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="src\Pacman.h" />
-    <ClInclude Include="src\Directions.h" />
-    <ClInclude Include="src\PacMan.h" />
-    <ClInclude Include="src\Map.h" />
-    <ClInclude Include="src\Entity.h" />
-    <ClInclude Include="src\Game.h" />
-    <ClInclude Include="src\stdafx.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="resources\labyrinth.png" />
-    <Image Include="resources\things.png" />
+    <ClCompile Include="src\UI.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

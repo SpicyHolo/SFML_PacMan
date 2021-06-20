@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Entity.h"
 
-//Constructor
+//Constructor and destructor
 Entity::Entity(sf::Texture& texture, const sf::Vector2u& texture_size, const sf::Vector2u& starting_texture_pos, const unsigned& frames_total , float &dt, const sf::Vector2i &tile_position, const float& velocity)
 	: texture(texture), textureSize(texture_size), startingTexturePos(starting_texture_pos), framesTotal(frames_total), dt(dt), velocity(velocity)
 {
@@ -31,18 +31,7 @@ Entity::~Entity()
 {
 }
 
-//Update
-void Entity::update()
-{
-	this->animate();
-}
-
-//Render
-void Entity::render(sf::RenderTarget &target)
-{
-	target.draw(this->sprite);
-}
-
+//Initializer functions
 //Loads animation sf::IntRect into a map (for each facing direction)
 void Entity::initAnimation()
 {
@@ -54,10 +43,10 @@ void Entity::initAnimation()
 	this->frames[Directions::dir::RIGHT] = std::vector<sf::IntRect>();
 
 	std::vector<sf::IntRect>* order_array[4] = { &this->frames.at(Directions::dir::UP), &this->frames.at(Directions::dir::DOWN), &this->frames.at(Directions::dir::LEFT), &this->frames.at(Directions::dir::RIGHT) };
-	
-	for (size_t i = 0; i < 4; i++)
+
+	for (unsigned i = 0; i < 4; i++)
 	{
-		for (size_t j = 0; j < this->framesTotal; j++)
+		for (unsigned j = 0; j < this->framesTotal; j++)
 		{
 			int left = (this->startingTexturePos.x + (i * this->framesTotal) + j) * this->textureSize.x;
 			int top = (this->startingTexturePos.y * this->textureSize.y); //Each animation is done in one row
@@ -67,6 +56,45 @@ void Entity::initAnimation()
 			order_array[i]->push_back(sf::IntRect(left, top, width, height));
 		}
 	}
+}
+
+//Movement and location
+void Entity::setFacingDirection(const int &dir)
+{
+	this->facingDirection = dir;
+}
+
+void Entity::move(const sf::Vector2f& offset)
+{
+	this->screenPosition.x += offset.x;
+	this->screenPosition.y += offset.y;
+
+	if (static_cast<int>(this->screenPosition.x + 8) % 16 == 0 && static_cast<int>(this->screenPosition.y + 8) % 16 == 0)
+	{
+		this->tilePosition = sf::Vector2i(
+			static_cast<int>(round((this->screenPosition.x - 8) / 16)),
+			static_cast<int>(round((this->screenPosition.y - 8) / 16))
+		);
+	}
+
+	this->sprite.setPosition(this->screenPosition);
+}
+
+//Teleports sprite to a tile
+void Entity::setTile(const sf::Vector2i& tile)
+{
+	this->tilePosition = tile;
+	this->screenPosition = sf::Vector2f(
+		this->tilePosition.x * 16.f + 8.f,
+		this->tilePosition.y * 16.f + 8.f
+	);
+	this->sprite.setPosition(this->screenPosition);
+}
+
+//Update
+void Entity::update()
+{
+	this->animate();
 }
 
 //Animates the sprite based on facing direction
@@ -99,47 +127,24 @@ void Entity::animate()
 	}
 }
 
-//sets facing directoin
-void Entity::setFacingDirection(const Directions::dir& dir)
+//Render
+void Entity::render(sf::RenderTarget& target)
 {
-	this->facingDirection = dir;
+	target.draw(this->sprite);
 }
 
-//Moves the sprite
-void Entity::move(const sf::Vector2f& offset)
+const int Entity::getFacingDirection() const
 {
-	this->screenPosition.x += offset.x;
-	this->screenPosition.y += offset.y;
-
-	if (static_cast<int>(this->screenPosition.x + 8) % 16 == 0 && static_cast<int>(this->screenPosition.y + 8) % 16 == 0)
-	{
-		this->tilePosition = sf::Vector2i(
-			static_cast<int>(round((this->screenPosition.x - 8) / 16)), 
-			static_cast<int>(round((this->screenPosition.y - 8) / 16))
-		);
-	}
-
-	this->sprite.setPosition(this->screenPosition);
-}
-
-//Teleports sprite to a tile
-void Entity::setTile(const sf::Vector2i& tile)
-{
-	this->tilePosition = tile;
-	this->screenPosition = sf::Vector2f(
-		this->tilePosition.x * 16.f + 8.f,
-		this->tilePosition.y * 16.f + 8.f
-	);
-	this->sprite.setPosition(this->screenPosition);
+	return this->facingDirection;
 }
 
 //Accessors
-sf::Vector2i Entity::getTilePosition()
+const sf::Vector2i Entity::getTilePosition() const
 {
 	return this->tilePosition;
 }
 
-sf::Vector2f Entity::getScreenPosition()
+const sf::Vector2f Entity::getScreenPosition() const
 {
 	return this->screenPosition;
 }

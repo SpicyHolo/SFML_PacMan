@@ -1,14 +1,22 @@
 #include "stdafx.h"
 #include "Pacman.h"
 
+//Constructor and destructor
 Pacman::Pacman(sf::Texture& texture, const sf::Vector2u& textureSize, const sf::Vector2u& startingTexturePos, const unsigned& framesTotal, float& dt, const sf::Vector2i& tile_position, const float& velocity)
 	: Entity(texture, textureSize, startingTexturePos, framesTotal, dt, tile_position, velocity)
 {
+	//Health points and score
+	this->score = 0;
+	this->healthPoints = 3;
+
 	this->sprite.setTextureRect(this->idleFrame);
 	this->queueDirection(Directions::dir::LEFT);
 }
 
-void Pacman::queueDirection(const Directions::dir& direction)
+Pacman::~Pacman() {}
+
+//Movement
+void Pacman::queueDirection(const Directions::dir& direction) //Adds direction to queue
 {
 	//You can only queue two directions
 	if (!this->directionsQueue.empty())
@@ -22,6 +30,9 @@ void Pacman::queueDirection(const Directions::dir& direction)
 	if (this->directionsQueue.size() < 2)
 		this->directionsQueue.push(direction);
 }
+
+//Called when pacman is blocked by a tile or gets to a Junction
+//Moves the second element in the queue to the front (if it exists)
 
 void Pacman::stop()
 {
@@ -80,16 +91,35 @@ void Pacman::move()
 	this->sprite.setPosition(this->screenPosition);
 }
 
+//Update
 void Pacman::update()
 {
 	this->animate();
 }
 
+void Pacman::damage()
+{
+	this->healthPoints--;
+}
+
+void Pacman::addScore(const int& score)
+{
+	this->score += score;
+}
+
+const int Pacman::getHealthPoints() const
+{
+	return this->healthPoints;
+}
+
+const int Pacman::getScore() const
+{
+	return this->score;
+}
+
+//Accessors
 const std::queue<Directions::dir> Pacman::getDirectionsQueue() const
 {
 	return this->directionsQueue;
 }
 
-Pacman::~Pacman()
-{
-}

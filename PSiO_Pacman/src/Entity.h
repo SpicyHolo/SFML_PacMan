@@ -12,18 +12,20 @@ protected:
 	sf::Vector2u startingTexturePos;
 
 	//Animations
-	std::map<Directions::dir, std::vector<sf::IntRect>> frames;
+	std::map<int, std::vector<sf::IntRect>> frames;
 	sf::IntRect idleFrame;
 
+	//Animation timer
 	int framesTotal;
 	float animationTimer;
 	float timer;
 
+	//Animation frame
 	int currentFrame;
 	int lastFrame;
 
-	//Movement
-	Directions::dir facingDirection;
+	//Movement and direction
+	int facingDirection;
 	float velocity;
 
 	//Tile position
@@ -33,27 +35,29 @@ protected:
 
 public:
 	
-
-	//Constructor
+	//Constructor and destructor
 	Entity(sf::Texture& texture, const sf::Vector2u& textureSize, const sf::Vector2u &startingTexturePos, const unsigned &framesTotal, float &dt, const sf::Vector2i& tile_position, const float &velocity);
 	virtual ~Entity();
 
-	//Update and Render
-	virtual void update();
-	virtual void render(sf::RenderTarget& target);
-
-	//Animation
+	//Initializer functions
 	void initAnimation();
-	virtual void animate();
+
 
 	//Movement and location
-	void setFacingDirection(const Directions::dir &dir);
-	virtual void move(const sf::Vector2f& offset);
+	void setFacingDirection(const int &dir);
+	void move(const sf::Vector2f& offset);
 	void setTile(const sf::Vector2i& tile);
 
+	//Update
+	virtual void update();
+	virtual void animate();
+
+	//Render
+	virtual void render(sf::RenderTarget& target);
 
 	//Accessors
-	sf::Vector2i getTilePosition();
-	sf::Vector2f getScreenPosition();
+	const int getFacingDirection() const;
+	const sf::Vector2i getTilePosition() const;
+	const sf::Vector2f getScreenPosition() const;
 };
 

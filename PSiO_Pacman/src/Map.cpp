@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Map.h"
 
+//Constructor and Destructor
 Map::Map(sf::Texture& texture, const unsigned& map_tile_size)
 	: texture(texture), mapTileSize(map_tile_size)
 {
@@ -9,7 +10,24 @@ Map::Map(sf::Texture& texture, const unsigned& map_tile_size)
 	this->initSprites();
 }
 
-void Map::initSprites()
+Map::~Map()
+{
+	for (auto &sprite : pieces)
+	{
+		delete sprite;
+	}
+
+	for (auto& vec : sprites)
+	{
+		for (auto& sprite : vec)
+		{
+			delete sprite;
+		}
+	}
+}
+
+//Initalizer funcctions
+void Map::initSprites() //Creates sprites for every type of labirynth piece
 {
 	this->pieces.resize(32);
 
@@ -75,6 +93,7 @@ void Map::initJunctions()
 	}
 }
 
+//Accessors
 int Map::getTile(const int& x, const int& y)
 {
 	return this->tiles[x][y];
@@ -83,6 +102,11 @@ int Map::getTile(const int& x, const int& y)
 bool Map::checkEntityBlock(const int& x, const int& y)
 {
 	return tiles[x][y] != 30 && tiles[x][y] != 26 && tiles[x][y] != 27;
+}
+
+bool Map::checkGhostBlock(const int& x, const int& y)
+{
+	return tiles[x][y] != 30 && tiles[x][y] != 26 && tiles[x][y] != 27 && tiles[x][y] != 31;
 }
 
 bool Map::isJunction(const int& x, const int& y)
@@ -95,16 +119,32 @@ bool Map::isJunction(const int& x, const int& y)
 	return false;
 }
 
-void Map::removeTictac(const sf::Vector2i& tile)
+bool Map::removeTictac(const sf::Vector2i& tile)
 {
-		if (tiles[tile.x][tile.y] == 26)
-			tiles[tile.x][tile.y] = 30;
+	if (tiles[tile.x][tile.y] == 26)
+	{
+		tiles[tile.x][tile.y] = 30;
+		return true;
+	}
+	return false;
 }
 
+bool Map::removePowerUp(const sf::Vector2i& tile)
+{
+	if (tiles[tile.x][tile.y] == 27)
+	{
+		tiles[tile.x][tile.y] = 30;
+		return true;
+	}
+	return false;
+}
+
+//Update
 void Map::update()
 {
 }
 
+//Render
 void Map::render(sf::RenderTarget& target)
 {
 	for (size_t i = 0; i < this->tiles.size(); i++)
