@@ -25,6 +25,10 @@ Entity::Entity(sf::Texture& texture, const sf::Vector2u& texture_size, const sf:
 
 	//Velocity
 	this->velocity = velocity;
+
+	//Global Bounds
+	this->globalBounds = this->sprite.getGlobalBounds();
+
 }
 
 Entity::~Entity()
@@ -95,6 +99,7 @@ void Entity::setTile(const sf::Vector2i& tile)
 void Entity::update()
 {
 	this->animate();
+	this->globalBounds = this->sprite.getGlobalBounds();
 }
 
 //Animates the sprite based on facing direction
@@ -147,4 +152,9 @@ const sf::Vector2i Entity::getTilePosition() const
 const sf::Vector2f Entity::getScreenPosition() const
 {
 	return this->screenPosition;
+}
+
+sf::FloatRect Entity::getGlobalBounds()
+{
+	return this->globalBounds;
 }

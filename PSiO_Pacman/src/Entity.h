@@ -32,6 +32,8 @@ protected:
 	sf::Vector2i tilePosition;
 	sf::Vector2f screenPosition;
 
+	//Bounds
+	sf::FloatRect globalBounds;
 
 public:
 	
@@ -59,5 +61,6 @@ public:
 	const int getFacingDirection() const;
 	const sf::Vector2i getTilePosition() const;
 	const sf::Vector2f getScreenPosition() const;
+	sf::FloatRect getGlobalBounds();
 };
 

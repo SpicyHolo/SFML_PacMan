@@ -50,6 +50,11 @@ void Ghost::setMode(const int &mode)
 	this->mode = mode;
 }
 
+void Ghost::setDecisionMade(const bool& value)
+{
+	this->decisionMade = value;
+}
+
 const int Ghost::getMode() const
 {
 	return this->mode;
@@ -63,4 +68,9 @@ const sf::Vector2i Ghost::getDestinationTile() const
 const sf::Vector2i Ghost::getScatterTile() const
 {
 	return this->scatterDestinationTile;
+}
+
+const bool Ghost::getDecisionMade() const
+{
+	return this->decisionMade;
 }

@@ -95,11 +95,16 @@ void Pacman::move()
 void Pacman::update()
 {
 	this->animate();
+	this->globalBounds = this->sprite.getGlobalBounds();
 }
 
 void Pacman::damage()
 {
-	this->healthPoints--;
+	if (this->healthPoints > 0)
+	{
+		this->healthPoints--;
+	}
+	std::cout << this->healthPoints;
 }
 
 void Pacman::addScore(const int& score)

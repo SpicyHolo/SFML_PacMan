@@ -6,7 +6,7 @@ Game::Game()
 {
 	this->init();
 	this->scatterTimer = 0.f;
-	this->maxScatterTimer = 300.f;
+	this->maxScatterTimer = 500.f;
 }
 
 Game::~Game()
@@ -225,8 +225,8 @@ void Game::ghostDecision(Ghost* ghost)
 				std::cout << "RIGHT: ";
 				break;
 			}
-			std::cout << d.second << std::endl;
-			*/
+			std::cout << d.second << std::endl;*/
+			
 
 			if (d.second < smallest_distance)
 			{
@@ -258,7 +258,7 @@ void Game::updateGhost()
 		{
 			this->ghosts["BLINKY"]->setDestination(this->pacman->getTilePosition());
 		}
-
+		//OTHER GHOSTS
 		if (this->ghosts["PINKY"]->getMode() == MODE::PURSUIT)
 		{
 			switch (this->pacman->getFacingDirection())
@@ -308,7 +308,6 @@ void Game::updateGhost()
 			inky_destination = pacman_position - pacman_to_blinky;
 			//Rotate by 180deg
 			this->ghosts["INKY"]->setDestination(inky_destination);
-			std::cout << "x: " << inky_destination.x << " y: " << inky_destination.y << std::endl;
 		}
 
 		if (this->ghosts["CLYDE"]->getMode() == MODE::PURSUIT)
@@ -321,36 +320,45 @@ void Game::updateGhost()
 	}
 	for (auto& g : ghosts)
 	{
-		this->ghostDecision(g.second);
+		int tileX = static_cast<int>(g.second->getScreenPosition().x + 8);
+		int tileY = static_cast<int>(g.second->getScreenPosition().x + 8);
+
+		if ((tileX % 16 == 0 && tileY % 16 == 0) && (tileX / 16 != g.second->getTilePosition().x || tileY / 16 != g.second->getTilePosition().y))
+			this->ghostDecision(g.second);
 		g.second->update();
 		g.second->move();
 		this->teleportTunnels(g.second);
+		if (g.second->getGlobalBounds().intersects(this->pacman->getGlobalBounds()))
+		{
+			this->pacman->damage();
+		}
 	}
 }
 
 void Game::update()
 {
-	this->updateSfmlEvents();
-	this->dt = this->dtClock.restart().asSeconds();
-	this->map->update();
-	this->ui->update(this->pacman->getScore(), this->pacman->getHealthPoints());
-	this->updatePacman();
+		this->updateSfmlEvents();
+		this->dt = this->dtClock.restart().asSeconds();
+		this->map->update();
+		this->ui->update(this->pacman->getScore(), this->pacman->getHealthPoints());
+		this->updatePacman();
 
-	if (this->scatterTimer >= this->maxScatterTimer)
-		for (auto& g : ghosts)
+		if (this->scatterTimer >= this->maxScatterTimer)
+			for (auto& g : ghosts)
+			{
+				g.second->setMode(MODE::PURSUIT);
+				this->maxScatterTimer = -1;
+				this->scatterTimer = 0;
+			}
+		else
 		{
-			g.second->setMode(MODE::PURSUIT);
-			this->maxScatterTimer = -1;
-			this->scatterTimer = 0;
+			if (this->scatterTimer >= 0)
+				this->scatterTimer += 100.f * this->dt;
 		}
-	else
-	{
-		if (this->scatterTimer >= 0)
-			this->scatterTimer += 100.f * this->dt;
-	}
 
-	this->updateGhost();
-	blinky[0].position = sf::Vector2f(this->ghosts["BLINKY"]->getTilePosition().x *16.f , this->ghosts["BLINKY"]->getTilePosition().y *16.f);
+		this->updateGhost();
+	//DEBUG
+	/*blinky[0].position = sf::Vector2f(this->ghosts["BLINKY"]->getTilePosition().x *16.f , this->ghosts["BLINKY"]->getTilePosition().y *16.f);
 	blinky[0].color = sf::Color::Red;
 
 	blinky[1].position = sf::Vector2f(this->ghosts["BLINKY"]->getDestinationTile().x * 16.f, this->ghosts["BLINKY"]->getDestinationTile().y * 16.f);
@@ -372,7 +380,7 @@ void Game::update()
 	clyde[0].color = sf::Color(255, 165, 0);
 
 	clyde[1].position = sf::Vector2f(this->ghosts["CLYDE"]->getDestinationTile().x * 16.f, this->ghosts["CLYDE"]->getDestinationTile().y * 16.f);
-	clyde[1].color = sf::Color(255, 165, 0);
+	clyde[1].color = sf::Color(255, 165, 0);*/
 }
 
 //Render
@@ -383,14 +391,17 @@ void Game::render()
 	//Render stuff here
 	this->ui->render(*this->window);
 	this->map->render(*this->window);
-	this->pacman->render(*this->window);
+
 
 	for(auto &g : ghosts)
 		g.second->render(*this->window);
-	//window->draw(this->blinky, 2, sf::Lines);
-	//window->draw(this->pinky, 2, sf::Lines);
-	//window->draw(this->inky, 2, sf::Lines);
-	window->draw(this->clyde, 2, sf::Lines);
+
+	this->pacman->render(*this->window);
+	//DEBUG
+	/*window->draw(this->blinky, 2, sf::Lines);
+	window->draw(this->pinky, 2, sf::Lines);
+	window->draw(this->inky, 2, sf::Lines);
+	window->draw(this->clyde, 2, sf::Lines);*/
 
 	window->display();
 }
@@ -400,6 +411,11 @@ void Game::run()
 {
 	while (this->isRunning())
 	{
+		if (this->pacman->getHealthPoints() <= 0)
+		{
+			this->window->close();
+		}
+
 		this->update();
 
 		this->render();

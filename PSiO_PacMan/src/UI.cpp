@@ -50,6 +50,7 @@ void UI::render(sf::RenderTarget &target)
 
 	for (size_t i = 0; i < this->countHP; i++)
 	{
-		target.draw(*this->displayHP[i]);
+		if(i < 3)
+			target.draw(*this->displayHP[i]);
 	}
 }
