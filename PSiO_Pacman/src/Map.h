@@ -29,8 +29,7 @@ public:
 	//Accessors
 	int getTile(const int &x, const int& y);
 
-	bool checkEntityBlock(const int& x, const int& y);
-	bool checkGhostBlock(const int& x, const int& y);
+	bool isSolid(const int& x, const int& y);
 
 	bool isJunction(const int& x, const int& y);
 

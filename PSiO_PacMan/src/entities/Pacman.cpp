@@ -1,14 +1,13 @@
-#include "stdafx.h"
+#include "../stdafx.h"
 #include "Pacman.h"
 
 //Constructor and destructor
-Pacman::Pacman(sf::Texture& texture, const sf::Vector2u& textureSize, const sf::Vector2u& startingTexturePos, const unsigned& framesTotal, float& dt, const sf::Vector2i& tile_position, const float& velocity)
-	: Entity(texture, textureSize, startingTexturePos, framesTotal, dt, tile_position, velocity)
+Pacman::Pacman(Map* map, sf::Texture& texture, const sf::Vector2u& textureSize, const sf::Vector2u& startingTexturePos, const unsigned& framesTotal, float& dt, const sf::Vector2i& tile_position, const float& velocity)
+	: Entity(map, texture, textureSize, startingTexturePos, framesTotal, dt, tile_position, velocity)
 {
 	//Health points and score
 	this->score = 0;
 	this->healthPoints = 3;
-
 	this->sprite.setTextureRect(this->idleFrame);
 	this->queueDirection(Directions::dir::LEFT);
 }
@@ -67,13 +66,13 @@ void Pacman::move()
 	switch (this->facingDirection)
 	{
 	case Directions::dir::UP:
-		this->screenPosition.y += (-1)*this->velocity;
+		this->screenPosition.y -= this->velocity;
 		break;
 	case Directions::dir::DOWN:
 		this->screenPosition.y += this->velocity;
 		break;
 	case Directions::dir::LEFT:
-		this->screenPosition.x += (-1)*this->velocity;
+		this->screenPosition.x -= this->velocity;
 		break;
 	case Directions::dir::RIGHT:
 		this->screenPosition.x += this->velocity;
@@ -91,25 +90,62 @@ void Pacman::move()
 	this->sprite.setPosition(this->screenPosition);
 }
 
+bool Pacman::canMove()
+{
+	if (!this->getDirectionsQueue().empty())
+	{
+		switch (this->getDirectionsQueue().front())
+		{
+		case Directions::dir::UP:
+			return !this->map->isSolid(this->getTilePosition().x, this->getTilePosition().y - 1);
+			break;
+		case Directions::dir::DOWN:
+			return !this->map->isSolid(this->getTilePosition().x, this->getTilePosition().y + 1);
+			break;
+		case Directions::dir::LEFT:
+			return !this->map->isSolid(this->getTilePosition().x - 1, this->getTilePosition().y);
+			break;
+		case Directions::dir::RIGHT:
+			return !this->map->isSolid(this->getTilePosition().x + 1, this->getTilePosition().y);
+			break;
+		}
+	}
+	return true;
+}
+
 //Update
 void Pacman::update()
 {
+	if (this->canMove())
+		this->move();
+	else
+		this->stop();
+
+	if (this->map->isJunction(this->getTilePosition().x, this->getTilePosition().y))
+		this->stop();
+
+	this->teleportTunnels();
+
 	this->animate();
 	this->globalBounds = this->sprite.getGlobalBounds();
 }
 
-void Pacman::damage()
+void Pacman::removeHealthPoints()
 {
 	if (this->healthPoints > 0)
 	{
 		this->healthPoints--;
 	}
-	std::cout << this->healthPoints;
 }
 
 void Pacman::addScore(const int& score)
 {
 	this->score += score;
+}
+
+void Pacman::setHealthPoints(const int& hp)
+{
+	this->healthPoints = hp;
 }
 
 const int Pacman::getHealthPoints() const

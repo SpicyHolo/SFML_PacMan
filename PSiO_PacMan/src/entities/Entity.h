@@ -1,4 +1,6 @@
 #pragma once
+#include "../Map.h"
+
 class Entity
 {
 protected:
@@ -27,6 +29,7 @@ protected:
 	//Movement and direction
 	int facingDirection;
 	float velocity;
+	bool changedTile;
 
 	//Tile position
 	sf::Vector2i tilePosition;
@@ -35,10 +38,13 @@ protected:
 	//Bounds
 	sf::FloatRect globalBounds;
 
+	//Map Pointer
+	Map* map;
+
 public:
 	
 	//Constructor and destructor
-	Entity(sf::Texture& texture, const sf::Vector2u& textureSize, const sf::Vector2u &startingTexturePos, const unsigned &framesTotal, float &dt, const sf::Vector2i& tile_position, const float &velocity);
+	Entity(Map* map, sf::Texture& texture, const sf::Vector2u& textureSize, const sf::Vector2u &startingTexturePos, const unsigned &framesTotal, float &dt, const sf::Vector2i& tile_position, const float &velocity);
 	virtual ~Entity();
 
 	//Initializer functions
@@ -49,6 +55,7 @@ public:
 	void setFacingDirection(const int &dir);
 	void move(const sf::Vector2f& offset);
 	void setTile(const sf::Vector2i& tile);
+	void teleportTunnels();
 
 	//Update
 	virtual void update();

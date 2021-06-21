@@ -1,9 +1,13 @@
 #pragma once
-#include "Entity.h"
+#include "entities/Entity.h"
 #include "Map.h"
-#include "Pacman.h"
+#include "entities/Pacman.h"
 #include "UI.h"
-#include "Ghost.h"
+
+#include "entities/Blinky.h"
+#include "entities/Pinky.h"
+#include "entities/Inky.h"
+#include "entities/Clyde.h"
 
 class Game
 {
@@ -27,35 +31,32 @@ private:
 	//Entities
 	Pacman* pacman;
 	std::map<std::string, Ghost*> ghosts;
+	int eatenDots;
 
 	//UI
 	UI* ui;
 
 	//Timers
-	float scatterTimer;
-	float maxScatterTimer;
+	float timer;
+	int currentPhase;
+	std::vector<float> modeSwapTimers;
 
-	//Vertexes
-	sf::Vertex blinky[2];
-	sf::Vertex pinky[2];
-	sf::Vertex inky[2];
-	sf::Vertex clyde[2];
+	float frightenedTimer;
+
+	float keytime;
 
 public:
-	enum MODE { SCATTER = 0, PURSUIT, FRIGHTENED, EATEN };
+	enum MODE { SCATTER = 0, CHASE, FRIGHTENED, EATEN };
 
 	//Constructor and Destructor
 	Game();
 	virtual ~Game();
 
 	//Initializer functions
+	void initMap();
 	void init();
 
 	void loadTextures();
-
-	//Entities functions
-	bool canPacmanMove();
-	void teleportTunnels(Entity* entity);
 
 	//Manage key presses
 	void keyPressed(int keyCode);
@@ -65,15 +66,18 @@ public:
 	bool isRunning();
 
 	//Update
-	void updatePacman();
-	void ghostDecision(Ghost* ghost);
-	void updateGhost();
+	void updateKeytime();
+	void updateFrightenedSwap();
+	void updateModeSwaps();
+	void updateGhosts();
 	void update();
 
 	//Render
 	void render();
 
 	//Run engine
+	void winGame();
+	void reset();
 	void run();
 };
 

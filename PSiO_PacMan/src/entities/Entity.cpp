@@ -1,9 +1,9 @@
-#include "stdafx.h"
+#include "../stdafx.h"
 #include "Entity.h"
 
 //Constructor and destructor
-Entity::Entity(sf::Texture& texture, const sf::Vector2u& texture_size, const sf::Vector2u& starting_texture_pos, const unsigned& frames_total , float &dt, const sf::Vector2i &tile_position, const float& velocity)
-	: texture(texture), textureSize(texture_size), startingTexturePos(starting_texture_pos), framesTotal(frames_total), dt(dt), velocity(velocity)
+Entity::Entity(Map* map, sf::Texture& texture, const sf::Vector2u& texture_size, const sf::Vector2u& starting_texture_pos, const unsigned& frames_total , float &dt, const sf::Vector2i &tile_position, const float& velocity)
+	: map(map), texture(texture), textureSize(texture_size), startingTexturePos(starting_texture_pos), framesTotal(frames_total), dt(dt), velocity(velocity)
 {
 
 	//init animation variables
@@ -22,13 +22,12 @@ Entity::Entity(sf::Texture& texture, const sf::Vector2u& texture_size, const sf:
 	this->tilePosition = tile_position;
 	this->screenPosition = sf::Vector2f(tilePosition.x * 16.f + 16.f, tilePosition.y * 16.f + 8.f);
 	this->sprite.setPosition(this->screenPosition);
-
-	//Velocity
-	this->velocity = velocity;
+	this->changedTile = false;
 
 	//Global Bounds
 	this->globalBounds = this->sprite.getGlobalBounds();
 
+	this->sprite.setTextureRect(this->idleFrame);
 }
 
 Entity::~Entity()
@@ -48,9 +47,9 @@ void Entity::initAnimation()
 
 	std::vector<sf::IntRect>* order_array[4] = { &this->frames.at(Directions::dir::UP), &this->frames.at(Directions::dir::DOWN), &this->frames.at(Directions::dir::LEFT), &this->frames.at(Directions::dir::RIGHT) };
 
-	for (unsigned i = 0; i < 4; i++)
+	for (int i = 0; i < 4; i++)
 	{
-		for (unsigned j = 0; j < this->framesTotal; j++)
+		for (int j = 0; j < this->framesTotal; j++)
 		{
 			int left = (this->startingTexturePos.x + (i * this->framesTotal) + j) * this->textureSize.x;
 			int top = (this->startingTexturePos.y * this->textureSize.y); //Each animation is done in one row
@@ -75,10 +74,17 @@ void Entity::move(const sf::Vector2f& offset)
 
 	if (static_cast<int>(this->screenPosition.x + 8) % 16 == 0 && static_cast<int>(this->screenPosition.y + 8) % 16 == 0)
 	{
-		this->tilePosition = sf::Vector2i(
+		sf::Vector2i tile_position(
 			static_cast<int>(round((this->screenPosition.x - 8) / 16)),
 			static_cast<int>(round((this->screenPosition.y - 8) / 16))
 		);
+
+		if (tile_position != this->getTilePosition())
+		{
+			this->changedTile = true;
+		}
+		
+		this->tilePosition = tile_position;
 	}
 
 	this->sprite.setPosition(this->screenPosition);
@@ -95,6 +101,14 @@ void Entity::setTile(const sf::Vector2i& tile)
 	this->sprite.setPosition(this->screenPosition);
 }
 
+void Entity::teleportTunnels()
+{
+	if (this->getTilePosition().x == 0 && this->getTilePosition().y == 17)
+		this->setTile(sf::Vector2i(26, 17));
+	else if (this->getTilePosition().x == 27 && this->getTilePosition().y == 17)
+		this->setTile(sf::Vector2i(1, 17));
+}
+
 //Update
 void Entity::update()
 {
@@ -107,7 +121,7 @@ void Entity::animate()
 {
 	if (!this->facingDirection == Directions::dir::IDLE)
 	{
-		this->timer += 100.f * this->dt;
+		this->timer += 40.f * this->framesTotal * this->dt;
 		if (this->timer >= this->animationTimer)
 		{
 			//Reset timer

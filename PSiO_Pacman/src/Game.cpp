@@ -4,17 +4,29 @@
 //Constructor and Destructor
 Game::Game()
 {
+	this->loadTextures();
+	this->initMap();
+
+	//Initialize renderWindow
+	this->window = new sf::RenderWindow(sf::VideoMode(448, 596), "PacMan");
+	this->window->setFramerateLimit(288);
+
 	this->init();
-	this->scatterTimer = 0.f;
-	this->maxScatterTimer = 500.f;
 }
 
 Game::~Game()
 {
-	delete this->window;
+	delete this-> window;
 	delete this->map;
 	delete this->pacman;
 	delete this->ui;
+	for (auto& e : ghosts)
+		delete e.second;
+}
+
+void Game::initMap()
+{
+	this->map = new Map(this->labyrinthTexture, 8);
 }
 
 //Initalizer functions
@@ -22,103 +34,74 @@ void Game::init()
 {
 	//Initialize variables
 	this->dt = 0.f;
-
-	//Load Textures
-	this->loadTextures();
-
-	//Initialize renderWindow
-	this->window = new sf::RenderWindow(sf::VideoMode(448, 596), "PacMan");
-
-	//Initialize entities
-	this->pacman = new Pacman(this->entityTexture, sf::Vector2u(15, 15), sf::Vector2u(0, 0), 3, this->dt, sf::Vector2i(13, 26), 0.3f);
+	this->timer = 0.f;
+	this->frightenedTimer = 0.f;
+	this->currentPhase = 0;
+	this->modeSwapTimers = { 5.f, 20.f, 5.f, 20.f, 5.f, 1037.14f, 0.01f };
+	this->keytime = 0.f;
 	
-	this->ghosts["BLINKY"] = new Ghost(this->entityTexture, sf::Vector2u(15, 15), sf::Vector2u(0, 1), 2, this->dt, sf::Vector2i(13, 14), 0.2f, sf::Vector2i(23, 4));
-
-	this->ghosts["PINKY"] = new Ghost(this->entityTexture, sf::Vector2u(15, 15), sf::Vector2u(0, 2), 2, this->dt, sf::Vector2i(13, 14), 0.2f, sf::Vector2i(3, 4));
-
-	this->ghosts["INKY"] = new Ghost(this->entityTexture, sf::Vector2u(15, 15), sf::Vector2u(0, 3), 2, this->dt, sf::Vector2i(13, 14), 0.2f, sf::Vector2i(26, 32));
-
-	this->ghosts["CLYDE"] = new Ghost(this->entityTexture, sf::Vector2u(15, 15), sf::Vector2u(0, 4), 2, this->dt, sf::Vector2i(13, 14), 0.2f, sf::Vector2i(1, 32));
-
-	//Initalize map
-	this->map = new Map(this->labyrinthTexture, 8);
+	this->eatenDots = 0;
 
 	//Initialize UI
 	this->ui = new UI(this->entityTexture);
+
+	//Initialize entities
+	sf::Vector2u texture_size(15, 15);
+	this->pacman = new Pacman(this->map, this->entityTexture, texture_size, sf::Vector2u(0, 0), 3, this->dt, sf::Vector2i(13, 26), 0.4f);
+	this->ghosts["BLINKY"] = new Blinky(this->pacman, this->map, this->entityTexture, texture_size, sf::Vector2u(0, 1), 2, this->dt, sf::Vector2i(13, 14), 0.3f, sf::Vector2i(23, 4));
+	this->ghosts["PINKY"] = new Pinky(this->pacman, this->map, this->entityTexture, texture_size, sf::Vector2u(0, 2), 2, this->dt, sf::Vector2i(13, 14), 0.3f, sf::Vector2i(3, 4));
+	this->ghosts["INKY"] = new Inky(dynamic_cast<Blinky*>(this->ghosts["BLINKY"]), this->pacman, this->map, this->entityTexture, texture_size, sf::Vector2u(0, 3), 2, this->dt, sf::Vector2i(13, 14), 0.3f , sf::Vector2i(26, 32));
+	this->ghosts["CLYDE"] = new Clyde(this->pacman, this->map, this->entityTexture, texture_size, sf::Vector2u(0, 4), 2, this->dt, sf::Vector2i(13, 14), 0.3f, sf::Vector2i(1, 32));
 }
 
 void Game::loadTextures()
 {
-	if (!this->labyrinthTexture.loadFromFile("resources/labyrinth.png"))
-	{
-		std::cout << "COULD NOT LOAD TEXTURE";
-		//TODO FIX ERROR CATCHING
-	}
-
+	this->labyrinthTexture.loadFromFile("resources/labyrinth.png");
 	this->entityTexture.loadFromFile("resources/things.png");
-}
-
-//Entities functions
-bool Game::canPacmanMove()
-{
-	if (!this->pacman->getDirectionsQueue().empty())
-	{
-		switch (this->pacman->getDirectionsQueue().front())
-		{
-		case Directions::dir::UP:
-			return !this->map->checkEntityBlock(this->pacman->getTilePosition().x, this->pacman->getTilePosition().y - 1);
-			break;
-		case Directions::dir::DOWN:
-			return !this->map->checkEntityBlock(this->pacman->getTilePosition().x, this->pacman->getTilePosition().y + 1);
-			break;
-		case Directions::dir::LEFT:
-			return !this->map->checkEntityBlock(this->pacman->getTilePosition().x - 1, this->pacman->getTilePosition().y);
-			break;
-		case Directions::dir::RIGHT:
-			return !this->map->checkEntityBlock(this->pacman->getTilePosition().x + 1, this->pacman->getTilePosition().y);
-			break;
-		}
-	}
-	return true;
-}
-
-void Game::teleportTunnels(Entity* entity)
-{
-	if (entity->getTilePosition().x == 0 && entity->getTilePosition().y == 17)
-		entity->setTile(sf::Vector2i(26, 17));
-	else if (entity->getTilePosition().x == 27 && entity->getTilePosition().y == 17)
-		entity->setTile(sf::Vector2i(1, 17));
 }
 
 //Manage key presses
 void Game::keyPressed(int keyCode)
 {
-	switch (keyCode)
+	if (this->keytime >= 2.f)
 	{
-	case sf::Keyboard::Up:
-		this->pacman->queueDirection(Directions::dir::UP);
-		break;
-	case sf::Keyboard::Down:
-		this->pacman->queueDirection(Directions::dir::DOWN);
-		break;
-	case sf::Keyboard::Left:
-		this->pacman->queueDirection(Directions::dir::LEFT);
-		break;
-	case sf::Keyboard::Right:
-		this->pacman->queueDirection(Directions::dir::RIGHT);
-		break;
+		this->keytime = 0.f;
+		switch (keyCode)
+		{
+		case sf::Keyboard::Up:
+			this->pacman->queueDirection(Directions::dir::UP);
+			break;
+		case sf::Keyboard::Down:
+			this->pacman->queueDirection(Directions::dir::DOWN);
+			break;
+		case sf::Keyboard::Left:
+			this->pacman->queueDirection(Directions::dir::LEFT);
+			break;
+		case sf::Keyboard::Right:
+			this->pacman->queueDirection(Directions::dir::RIGHT);
+			break;
+		}
 	}
 }
 
 //Sfml window stuff
+void Game::updateKeytime()
+{
+	if (keytime < 2.f)
+		keytime += 10.f * dt;
+}
+
 void Game::updateSfmlEvents()
 {
 	while (this->window->pollEvent(this->sfmlEvent))
 	{
 		if (this->sfmlEvent.type == sf::Event::Closed)
-			window->close();
+			this->window->close();
 
 		if (this->sfmlEvent.type == sf::Event::KeyPressed)
+			if (this->sfmlEvent.key.code == sf::Keyboard::Key::Escape)
+				this->window->close();
+
 			this->keyPressed(this->sfmlEvent.key.code);
 	}
 }
@@ -128,282 +111,197 @@ bool Game::isRunning()
 	return this->window->isOpen();
 }
 
-//Update
-void Game::updatePacman()
+void Game::updateFrightenedSwap()
 {
-	if (this->canPacmanMove()) 
-		this->pacman->move();
-	else
-		this->pacman->stop();
-	
-	if (this->map->isJunction(this->pacman->getTilePosition().x, this->pacman->getTilePosition().y))
-		this->pacman->stop();
-
-	this->pacman->update();
-	this->teleportTunnels(pacman);
-
-	if (this->map->removeTictac(this->pacman->getTilePosition()))
-		this->pacman->addScore(50);
-
-	if (this->map->removePowerUp(this->pacman->getTilePosition()))
-		this->pacman->addScore(500);
-}
-
-void Game::ghostDecision(Ghost* ghost)
-{
-
-	if (static_cast<int>(ghost->getScreenPosition().x + 8) % 16 == 0 && static_cast<int>(ghost->getScreenPosition().y + 8) % 16 == 0)
-		{ 
-		std::map<int, bool> options = 
-		{ 
-			{Directions::dir::UP, true},{Directions::dir::DOWN, true},{Directions::dir::LEFT, true},{Directions::dir::RIGHT, true} 
-		};
-	
-		//Ghosts don't turn back in scatter/pursue mode
-		switch (ghost->getFacingDirection())
+	if (this->frightenedTimer > 0)
+		this->frightenedTimer -= dt;
+	else 
+	{
+		if (this->currentPhase % 2 == 0)
 		{
-		case Directions::dir::UP:
-			options[Directions::dir::DOWN] = false;
-			break;
-		case Directions::dir::DOWN:
-			options[Directions::dir::UP] = false;
-			break;
-		case Directions::dir::LEFT:
-			options[Directions::dir::RIGHT] = false;
-			break;
-		case Directions::dir::RIGHT:
-			options[Directions::dir::LEFT] = false;
-			break;
-		}
-
-		//Check for block on all sides
-		if (this->map->checkEntityBlock(ghost->getTilePosition().x, ghost->getTilePosition().y - 1))
-			options[Directions::dir::UP] = false;
-		if (this->map->checkEntityBlock(ghost->getTilePosition().x, ghost->getTilePosition().y + 1))
-			options[Directions::dir::DOWN] = false;
-		if (this->map->checkEntityBlock(ghost->getTilePosition().x - 1, ghost->getTilePosition().y))
-			options[Directions::dir::LEFT] = false;
-		if (this->map->checkEntityBlock(ghost->getTilePosition().x + 1, ghost->getTilePosition().y))
-			options[Directions::dir::RIGHT] = false;
-
-		//Calculate distance
-		std::map <int, float> distance = 
-		{
-		{Directions::dir::UP, 999},{Directions::dir::DOWN, 999},{Directions::dir::LEFT, 999},{Directions::dir::RIGHT, 999}
-		};
-
-		if (options[Directions::dir::UP])
-			distance[Directions::dir::UP] = ghost->calcualteDistance(ghost->getTilePosition() + sf::Vector2i(0, -1), ghost->getDestinationTile());
-		if (options[Directions::dir::DOWN])
-			distance[Directions::dir::DOWN] = ghost->calcualteDistance(ghost->getTilePosition() + sf::Vector2i(0, 1), ghost->getDestinationTile());
-		if (options[Directions::dir::LEFT])
-			distance[Directions::dir::LEFT] = ghost->calcualteDistance(ghost->getTilePosition() + sf::Vector2i(-1, 0), ghost->getDestinationTile());
-		if (options[Directions::dir::RIGHT])
-			distance[Directions::dir::RIGHT] = ghost->calcualteDistance(ghost->getTilePosition() + sf::Vector2i(1, 0), ghost->getDestinationTile());
-	
-		float smallest_distance = 998;
-		int smallest_distance_key = 0;
-		for (auto& d : distance)
-		{
-			//DEBUG
-			/*
-			switch (d.first)
+			for (auto& e : ghosts)
 			{
-			case Directions::dir::UP:
-				std::cout << "UP  : ";
-				break;
-			case Directions::dir::DOWN:
-				options[Directions::dir::UP] = false;
-				std::cout << "DOWN: ";
-				break;
-			case Directions::dir::LEFT:
-				options[Directions::dir::RIGHT] = false;
-				std::cout << "LEFT: ";
-				break;
-			case Directions::dir::RIGHT:
-				options[Directions::dir::LEFT] = false;
-				std::cout << "RIGHT: ";
-				break;
-			}
-			std::cout << d.second << std::endl;*/
-			
-
-			if (d.second < smallest_distance)
-			{
-				smallest_distance = d.second;
-				smallest_distance_key = d.first;
-			}
-		}
-
-		int top_priority_key = smallest_distance_key;
-		for (auto& d : distance)
-		{
-			if (d.first == smallest_distance_key)
-			{
-				if (d.first < top_priority_key)
+				if (e.second->getMode() == 2) //MODE::FRIGHTEND
 				{
-					top_priority_key = d.first;
+					e.second->setMode(0); //MODE::SCATTER 
 				}
 			}
 		}
-		ghost->setFacingDirection(top_priority_key);
+		else
+		{
+			for (auto& e : ghosts)
+			{
+				if (e.second->getMode() == 2) //MODE::FRIGHTEND
+				{
+					e.second->setMode(1); //MODE::SCATTER 
+				}
+			}
+		}
 	}
 }
 
-void Game::updateGhost()
+
+void Game::updateModeSwaps()
 {
-	if (!pacman->getDirectionsQueue().empty())
+	if (this->currentPhase == this->modeSwapTimers.size() + 1)
 	{
-		if (this->ghosts["BLINKY"]->getMode() == MODE::PURSUIT)
+		for (auto& e : ghosts)
 		{
-			this->ghosts["BLINKY"]->setDestination(this->pacman->getTilePosition());
+			if(e.second->getMode() != 2) //Ignore if is in MODE::FRIGHTENED
+				e.second->setMode(1); //Set to MODE::CHASE
 		}
-		//OTHER GHOSTS
-		if (this->ghosts["PINKY"]->getMode() == MODE::PURSUIT)
+		return;
+	}
+
+	if (this->timer >= this->modeSwapTimers[this->currentPhase])
+	{
+		this->timer = 0.f;
+		this->currentPhase++;
+		if (this->currentPhase % 2 == 0)
 		{
-			switch (this->pacman->getFacingDirection())
+			for (auto& e : ghosts)
 			{
-			case Directions::dir::UP:
-				this->ghosts["PINKY"]->setDestination(this->pacman->getTilePosition() + sf::Vector2i(-4, -4));
-				break;
-			case Directions::dir::DOWN:
-				this->ghosts["PINKY"]->setDestination(this->pacman->getTilePosition() + sf::Vector2i(0, 4));
-				break;
-			case Directions::dir::LEFT:
-				this->ghosts["PINKY"]->setDestination(this->pacman->getTilePosition() + sf::Vector2i(-4, 0));
-				break;
-			case Directions::dir::RIGHT:
-				this->ghosts["PINKY"]->setDestination(this->pacman->getTilePosition() + sf::Vector2i(4, 0));
-				break;
+				if (e.second->getMode() != 2) //Ignore if is in MODE::FRIGHTENED
+					e.second->setMode(0); //Set to MODE::SCATTER
 			}
 		}
-
-		//INKY DESTINATION 
-		//Vector from pacman to blinky rotated by 180 degress
-
-		if (this->ghosts["INKY"]->getMode() == MODE::PURSUIT)
+		else
 		{
-			sf::Vector2i inky_destination(0,0), 
-				pacman_to_blinky(0, 0), 
-				pacman_position(0, 0), 
-				blinky_position(this->ghosts["BLINKY"]->getTilePosition());
-
-			switch (this->pacman->getFacingDirection())
+			for (auto& e : ghosts)
 			{
-			case Directions::dir::UP:
-				pacman_position = this->pacman->getTilePosition() + sf::Vector2i(-2, -2);
-				break;
-			case Directions::dir::DOWN:
-				pacman_position = this->pacman->getTilePosition() + sf::Vector2i(0, 2);
-				break;
-			case Directions::dir::LEFT:
-				pacman_position = this->pacman->getTilePosition() + sf::Vector2i(-2, 0);
-				break;
-			case Directions::dir::RIGHT:
-				pacman_position = this->pacman->getTilePosition() + sf::Vector2i(2, 0);
-				break;
+				if (e.second->getMode() != 2) //Ignore if is in MODE::FRIGHTENED
+					e.second->setMode(1); //Set to MODE::CHASE
 			}
-
-			pacman_to_blinky =  blinky_position - pacman_position;
-			inky_destination = pacman_position - pacman_to_blinky;
-			//Rotate by 180deg
-			this->ghosts["INKY"]->setDestination(inky_destination);
-		}
-
-		if (this->ghosts["CLYDE"]->getMode() == MODE::PURSUIT)
-		{
-			if (this->ghosts["CLYDE"]->calcualteDistance(this->ghosts["CLYDE"]->getTilePosition(), this->pacman->getTilePosition()) >= 8)
-				this->ghosts["CLYDE"]->setDestination(this->pacman->getTilePosition());
-			else
-				this->ghosts["CLYDE"]->setDestination(this->ghosts["CLYDE"]->getScatterTile());
 		}
 	}
-	for (auto& g : ghosts)
-	{
-		int tileX = static_cast<int>(g.second->getScreenPosition().x + 8);
-		int tileY = static_cast<int>(g.second->getScreenPosition().x + 8);
 
-		if ((tileX % 16 == 0 && tileY % 16 == 0) && (tileX / 16 != g.second->getTilePosition().x || tileY / 16 != g.second->getTilePosition().y))
-			this->ghostDecision(g.second);
-		g.second->update();
-		g.second->move();
-		this->teleportTunnels(g.second);
-		if (g.second->getGlobalBounds().intersects(this->pacman->getGlobalBounds()))
+	this->timer += this->dt;
+}
+
+void Game::updateGhosts()
+{
+	for (auto& e : ghosts)
+	{
+		e.second->update();
+		if (e.second->getGlobalBounds().intersects(this->pacman->getGlobalBounds()))
 		{
-			this->pacman->damage();
+			if (e.second->getMode() == 2) //frightened mode
+			{
+				e.second->setTile(sf::Vector2i(13, 14));
+				//Choose left or right
+				float dist_left = e.second->calcualteDistance(e.second->getTilePosition() + sf::Vector2i(-1, 0), this->pacman->getTilePosition());
+				float dist_right = e.second->calcualteDistance(e.second->getTilePosition() + sf::Vector2i(1, 0), this->pacman->getTilePosition());
+				if (dist_left <= dist_right)
+					e.second->setFacingDirection(Directions::dir::LEFT);
+				else
+					e.second->setFacingDirection(Directions::dir::RIGHT);
+			
+				e.second->setMode(1);
+				this->pacman->addScore(200);
+			}
+			else if (e.second->getMode() == 0 || e.second->getMode() == 1) //scatter or chase mode
+			{
+				this->pacman->removeHealthPoints();
+				this->window->clear();
+				this->reset();
+			}
 		}
 	}
 }
 
 void Game::update()
 {
-		this->updateSfmlEvents();
-		this->dt = this->dtClock.restart().asSeconds();
-		this->map->update();
-		this->ui->update(this->pacman->getScore(), this->pacman->getHealthPoints());
-		this->updatePacman();
+	//dt Clock
+	this->dt = this->dtClock.restart().asSeconds();
 
-		if (this->scatterTimer >= this->maxScatterTimer)
-			for (auto& g : ghosts)
-			{
-				g.second->setMode(MODE::PURSUIT);
-				this->maxScatterTimer = -1;
-				this->scatterTimer = 0;
-			}
-		else
+	//Keytime
+	this->updateKeytime();
+
+	//SFML Events
+	this->updateSfmlEvents();
+
+	//Map
+	this->map->update();
+
+	//User Interface
+	this->ui->update(this->pacman->getScore(), this->pacman->getHealthPoints());
+
+	//Pacman
+	this->pacman->update();
+	if (this->map->removeTictac(this->pacman->getTilePosition()))
+	{
+		this->pacman->addScore(50);
+		this->eatenDots++;
+		if (this->eatenDots >= 244)
 		{
-			if (this->scatterTimer >= 0)
-				this->scatterTimer += 100.f * this->dt;
+			this->winGame();
 		}
+	}
 
-		this->updateGhost();
-	//DEBUG
-	/*blinky[0].position = sf::Vector2f(this->ghosts["BLINKY"]->getTilePosition().x *16.f , this->ghosts["BLINKY"]->getTilePosition().y *16.f);
-	blinky[0].color = sf::Color::Red;
+	if (this->map->removePowerUp(this->pacman->getTilePosition()))
+	{
+		this->pacman->addScore(500);
+		for (auto& e : this->ghosts)
+		{
+			e.second->setMode(2); //Frightened mode
+		}
+		this->frightenedTimer = 8.f;
+		this->eatenDots++;
+		if (this->eatenDots >= 244)
+			this->winGame();
+	}
 
-	blinky[1].position = sf::Vector2f(this->ghosts["BLINKY"]->getDestinationTile().x * 16.f, this->ghosts["BLINKY"]->getDestinationTile().y * 16.f);
-	blinky[1].color = sf::Color::Red;
+	//Frightened timer
+	this->updateFrightenedSwap();
 
-	pinky[0].position = sf::Vector2f(this->ghosts["PINKY"]->getTilePosition().x * 16.f, this->ghosts["PINKY"]->getTilePosition().y * 16.f);
-	pinky[0].color = sf::Color(255, 105, 180);
+	//Mode swaps timers
+	this->updateModeSwaps();
 
-	pinky[1].position = sf::Vector2f(this->ghosts["PINKY"]->getDestinationTile().x * 16.f, this->ghosts["PINKY"]->getDestinationTile().y * 16.f);
-	pinky[0].color = sf::Color(255, 105, 180);
-
-	inky[0].position = sf::Vector2f(this->ghosts["INKY"]->getTilePosition().x * 16.f, this->ghosts["INKY"]->getTilePosition().y * 16.f);
-	inky[0].color = sf::Color::Cyan;
-
-	inky[1].position = sf::Vector2f(this->ghosts["INKY"]->getDestinationTile().x * 16.f, this->ghosts["INKY"]->getDestinationTile().y * 16.f);
-	inky[1].color = sf::Color::Cyan;
-
-	clyde[0].position = sf::Vector2f(this->ghosts["CLYDE"]->getTilePosition().x * 16.f, this->ghosts["CLYDE"]->getTilePosition().y * 16.f);
-	clyde[0].color = sf::Color(255, 165, 0);
-
-	clyde[1].position = sf::Vector2f(this->ghosts["CLYDE"]->getDestinationTile().x * 16.f, this->ghosts["CLYDE"]->getDestinationTile().y * 16.f);
-	clyde[1].color = sf::Color(255, 165, 0);*/
+	//Ghosts
+	this->updateGhosts();
 }
+
 
 //Render
 void Game::render()
 {
 	window->clear();
 
-	//Render stuff here
+	//Render User Interface
 	this->ui->render(*this->window);
+
+	//Render Map
 	this->map->render(*this->window);
 
-
+	//Render Ghosts
 	for(auto &g : ghosts)
 		g.second->render(*this->window);
 
+	//Render Pacman
 	this->pacman->render(*this->window);
-	//DEBUG
-	/*window->draw(this->blinky, 2, sf::Lines);
-	window->draw(this->pinky, 2, sf::Lines);
-	window->draw(this->inky, 2, sf::Lines);
-	window->draw(this->clyde, 2, sf::Lines);*/
 
 	window->display();
+}
+
+
+
+void Game::reset()
+{
+	//Saving temporary data
+	int temp_score = this->pacman->getScore();
+	int temp_hp = this->pacman->getHealthPoints();
+	int temp_eatenDots = this->eatenDots;
+
+	//Delete dynamic objects
+
+	delete this->ui;
+	delete this->pacman;
+	for (auto& e : ghosts)
+		delete e.second;
+	this->init();
+	this->pacman->addScore(temp_score);
+	this->pacman->setHealthPoints(temp_hp);
+	this->eatenDots = temp_eatenDots;
 }
 
 //Run engine
@@ -413,11 +311,18 @@ void Game::run()
 	{
 		if (this->pacman->getHealthPoints() <= 0)
 		{
+			std::cout << "YOU LOST!" << std::endl;
 			this->window->close();
 		}
-
 		this->update();
-
 		this->render();
 	}
+
+}
+
+void Game::winGame()
+{
+	std::cout << "YOU HAVE WON!" << std::endl;
+	std::cout << "SCORE: " << this->pacman->getScore() << std::endl;
+	this->window->close();
 }

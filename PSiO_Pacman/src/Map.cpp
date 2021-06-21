@@ -95,18 +95,18 @@ void Map::initJunctions()
 
 //Accessors
 int Map::getTile(const int& x, const int& y)
-{
+{	
 	return this->tiles[x][y];
 }
 
-bool Map::checkEntityBlock(const int& x, const int& y)
+bool Map::isSolid(const int& x, const int& y)
 {
-	return tiles[x][y] != 30 && tiles[x][y] != 26 && tiles[x][y] != 27;
-}
-
-bool Map::checkGhostBlock(const int& x, const int& y)
-{
-	return tiles[x][y] != 30 && tiles[x][y] != 26 && tiles[x][y] != 27 && tiles[x][y] != 31;
+	if (x > tiles.size() || x < 0 || y > tiles[0].size() || y < 0)
+	{
+		return true;
+	}
+	else
+		return tiles[x][y] != 30 && tiles[x][y] != 26 && tiles[x][y] != 27;
 }
 
 bool Map::isJunction(const int& x, const int& y)

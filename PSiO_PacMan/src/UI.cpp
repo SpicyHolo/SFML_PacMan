@@ -15,7 +15,6 @@ UI::UI(sf::Texture &texture)
 	this->scoreText.setString("0");
 	
 	//HP
-	//(448, 596)
 	this->countHP = 0;
 	this->displayHP.resize(3);
 	for (size_t i = 0; i<this->displayHP.size(); i++)
