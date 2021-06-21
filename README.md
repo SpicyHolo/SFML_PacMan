@@ -27,7 +27,7 @@ They never choose the tile directly behind them (there's an exception from this 
 
 #source: https://www.youtube.com/watch?v=ataGotQ7ir8 (Pac-Man Ghost AI Explained)
 
-##credits
+## Credits
 I used the graphics from this repository
 I used similar map loading system and based my Pac-Man controls on that repository a bit
 https://github.com/HexagonNico/Pac-Man
@@ -35,7 +35,7 @@ https://github.com/HexagonNico/Pac-Man
 #Font: Arcadepix Plus by Jimmy Campbell based on Arcadepix by Reekee of Dimenzioned
 
 
-## TODO LIST
+## TODO
 
 #Gameplay
 - Add multiple levels
@@ -57,6 +57,6 @@ https://github.com/HexagonNico/Pac-Man
 #BUGS
 - When ghosts entering MODE::FRIGHTENED they turn 180 degress
 	When a wall is behind them during that state, they can glitch into a wall.
-	//Temporary fix: During entering the frightened stage - checking if a tile behind them isSolid(), if true don't turn around.
+	//Temporary fix: When entering into the frightened stage - check if the tile behind them isSolid(), if true don't turn around.
   
   
