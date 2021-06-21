@@ -6,7 +6,7 @@ My attempt of re-creating the original 1980 Pac-Man game in C++ using SFML libra
 ## Compilation
 
 I'm using Pre-compiled headers, so when .cpp files are not in the main direcotry (like entites/entity.cpp)
-You have to change headers directory for those files in entities/ to "../stdafx.cpp" instead of "stdfx.cpp"
+You have to change headers directory for those files in entities/ to "../stdafx.cpp" instead of "stdafx.cpp"
 
 ## Ghost AI
 The ghosts are trying to get to their target.
