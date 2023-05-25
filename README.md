@@ -1,4 +1,4 @@
-# SFML Poli Pac-Man
+# SFML Pac-Man
 
 My attempt of re-creating the original 1980 Pac-Man game in C++ using SFML library.
 
